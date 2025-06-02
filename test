@@ -1,0 +1,90 @@
+import csv
+from datetime import datetime
+
+FILENAME = "finance_data.csv"
+
+def load_transactions():
+    transactions = []
+    try:
+        with open(FILENAME, mode='r', newline='') as file:
+            reader = csv.DictReader(file)
+            for row in reader:
+                row['amount'] = float(row['amount'])
+                transactions.append(row)
+    except FileNotFoundError:
+        pass
+    return transactions
+
+def save_transactions(transactions):
+    with open(FILENAME, mode='w', newline='') as file:
+        fieldnames = ['date', 'type', 'category', 'amount', 'description']
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        for t in transactions:
+            writer.writerow(t)
+
+def add_transaction(transactions):
+    t_type = input("Enter type (income/expense): ").strip().lower()
+    if t_type not in ['income', 'expense']:
+        print("Invalid type.")
+        return
+    category = input("Enter category (e.g., salary, food, rent): ")
+    amount = float(input("Enter amount: "))
+    description = input("Enter description: ")
+    date = datetime.now().strftime('%Y-%m-%d')
+
+    transaction = {
+        'date': date,
+        'type': t_type,
+        'category': category,
+        'amount': amount,
+        'description': description
+    }
+
+    transactions.append(transaction)
+    save_transactions(transactions)
+    print("Transaction added.")
+
+def show_summary(transactions):
+    balance = 0
+    category_totals = {}
+
+    for t in transactions:
+        amt = t['amount'] if t['type'] == 'income' else -t['amount']
+        balance += amt
+        category_totals[t['category']] = category_totals.get(t['category'], 0) + amt
+
+    print(f"\nCurrent Balance: ${balance:.2f}")
+    print("\nCategory Summary:")
+    for cat, total in category_totals.items():
+        print(f" - {cat}: ${total:.2f}")
+
+def show_transactions(transactions):
+    print("\nAll Transactions:")
+    for t in transactions:
+        print(f"{t['date']} | {t['type']} | {t['category']} | ${t['amount']} | {t['description']}")
+
+def main():
+    transactions = load_transactions()
+
+    while True:
+        print("\nPersonal Finance Tracker")
+        print("1. Add transaction")
+        print("2. Show summary")
+        print("3. View transactions")
+        print("4. Exit")
+        choice = input("Choose an option: ")
+
+        if choice == '1':
+            add_transaction(transactions)
+        elif choice == '2':
+            show_summary(transactions)
+        elif choice == '3':
+            show_transactions(transactions)
+        elif choice == '4':
+            break
+        else:
+            print("Invalid choice.")
+
+if __name__ == "__main__":
+    main()
